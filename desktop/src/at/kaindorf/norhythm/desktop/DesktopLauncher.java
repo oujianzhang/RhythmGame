@@ -9,8 +9,8 @@ public class DesktopLauncher {
 		LwjglApplicationConfiguration config = new LwjglApplicationConfiguration();
 		config.fullscreen = true;
 		config.title = "NoRhythm";
+		config.height = 1080;
 		config.width = 1920;
-		config.height = 800;
 
 		new LwjglApplication(new RhythmGame(), config);
 	}
