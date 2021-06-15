@@ -1,56 +1,64 @@
 package at.kaindorf.norhythm;
 
-import com.badlogic.gdx.ApplicationAdapter;
-import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Graphics;
-import com.badlogic.gdx.Input;
+import com.badlogic.gdx.*;
 import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.*;
 import com.badlogic.gdx.utils.Array;
-import sun.jvm.hotspot.HelloWorld;
 
-import java.util.Locale;
+import javax.swing.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
 
 
 public class RhythmGame extends ApplicationAdapter {
 
+	private Preferences prefs;
 	private SpriteBatch batch;
 	private TextureAtlas textureAtlas;
-	private Animation<TextureRegion> animation_girl;
-	private Animation<TextureRegion> animation_missile;
 	private float elapsedTime = 0f;
-	private OrthographicCamera camera = new OrthographicCamera();
 	private Texture background;
 	private float background_width;
 	private float xCoordBg1, xCoordBg2;
 	private final int BACKGROUND_MOVING_SPEED = 800;
-	private float playerOriginPositionX = 0.10f;
-	private float playerOriginPositionY = 0.16f;
+	private Map<String, Animation<TextureRegion>> animations_map = new HashMap<>();
+	private static final String[] animation_names = {"run", "melee", "jump", "dead", "idle", "missile", "hitarea"};
 
+
+	/**
+	 * Initialization method for Animations and Texture for RhythmGame.
+	 */
 	@Override
 	public void create() {
+		prefs = Gdx.app.getPreferences("rhythm_game");
+		prefs.putInteger("background_moving_speed", 800);
+		prefs.putFloat("player_run_position_x", 0.10f);
+		prefs.putFloat("player_run_position_y", 0.16f);
+		prefs.putFloat("player_jump_position_y", 0.48f);
+		prefs.putFloat("player_melee_position_x", 0.15f);
+		prefs.putString("key_up", "x");
+		prefs.putString("key_down", "c");
+
 		batch = new SpriteBatch();
 		textureAtlas = new TextureAtlas(Gdx.files.internal("spritessheet.atlas"));
 		Array<TextureAtlas.AtlasRegion> sprites = textureAtlas.getRegions();
 
-		setBackgroundTexture();
-
-		animation_girl = new Animation<TextureRegion>(0.115f, getSprites(sprites, "run"));
-		animation_missile = new Animation<TextureRegion>(0.115f, getSprites(sprites,"missiles"));
-	}
-
-
-
-	public void setBackgroundTexture() {
+		// Set Background
 		background = new Texture(Gdx.files.internal("bg_snowytrees 1.png"));
 		background_width = 2399;
 		xCoordBg1 = background_width*(-1); xCoordBg2 = 0;
-	}
-	
-	public Array<TextureAtlas.AtlasRegion> getSprites(Array<TextureAtlas.AtlasRegion> atlas, String sprite_name) {
 
+		// Fill Animations Hash Map with all animations available in TextureAtlas
+		for (int i = 0; i < animation_names.length - 1; i++) {
+			animations_map.put(
+					animation_names[i],
+					new Animation<TextureRegion>(0.115f, getSprites(sprites, animation_names[i]))
+			);
+		}
+	}
+
+	public Array<TextureAtlas.AtlasRegion> getSprites(Array<TextureAtlas.AtlasRegion> atlas, String sprite_name) {
 		Array<TextureAtlas.AtlasRegion> sprites = new Array<>();
 		
 		for (int i = 0; i < atlas.size-1; i++) {
@@ -59,7 +67,6 @@ public class RhythmGame extends ApplicationAdapter {
 				sprites.add(atlas.get(i));
 			}
 		}
-		
 		return sprites;
 	}
 
@@ -77,15 +84,26 @@ public class RhythmGame extends ApplicationAdapter {
 		batch.draw(background, -xCoordBg1, 0);
 		batch.draw(background, -xCoordBg2, 0);
 
-		batch.draw(
-				animation_girl.getKeyFrame(elapsedTime, true),
-				playerOriginPositionX * Gdx.graphics.getWidth(),
-				playerOriginPositionY * Gdx.graphics.getHeight()
-		);
+		if(Gdx.input.isKeyPressed(Input.Keys.X)) {
 
-//		for (int i = 0; i < testMissileRate; i++) {
-//			batch.draw(animation_missile.getKeyFrame(elapsedTime, true), 0, 0);
-//		}
+			batch.draw(animations_map.get("melee").getKeyFrame(elapsedTime, true),
+					prefs.getFloat("player_melee_position_x") * Gdx.graphics.getWidth(),
+					prefs.getFloat("player_jump_position_y") * Gdx.graphics.getHeight()
+			);
+		} else if(Gdx.input.isKeyPressed(Input.Keys.C)) {
+			batch.draw(animations_map.get("melee").getKeyFrame(elapsedTime, true),
+					prefs.getFloat("player_melee_position_x") * Gdx.graphics.getWidth(),
+					prefs.getFloat("player_run_position_y") * Gdx.graphics.getHeight()
+			);
+		} else {
+			batch.draw(
+					animations_map.get("run").getKeyFrame(elapsedTime, true),
+					prefs.getFloat("player_run_position_x") * Gdx.graphics.getWidth(),
+					prefs.getFloat("player_run_position_y") * Gdx.graphics.getHeight()
+			);
+		}
+
+
 		batch.end();
 	}
 
